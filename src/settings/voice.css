@@ -1,0 +1,113 @@
+/* Voice-specific styles that supplement App.css */
+
+/* STT provider logo colors */
+.pl-local { background: linear-gradient(135deg, #4b5563, #6b7280); }
+.pl-groq { background: linear-gradient(135deg, #ef4444, #dc2626); }
+.pl-openai { background: linear-gradient(135deg, #10a37f, #059669); }
+.pl-mistral { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+
+/* Standalone badge */
+.badge {
+  font-size: 10px;
+  padding: 2px 8px;
+  background: rgba(120, 160, 255, 0.15);
+  border-radius: 4px;
+  color: rgba(150, 180, 255, 0.8);
+  letter-spacing: 1px;
+}
+.badge.warn {
+  background: rgba(245, 158, 11, 0.15);
+  color: rgba(245, 180, 130, 0.8);
+}
+.badge.ok {
+  background: rgba(34, 197, 94, 0.15);
+  color: rgba(130, 220, 150, 0.8);
+}
+
+/* Modal logo */
+.modal-logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+/* Quick test row */
+.quick-test {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+}
+.quick-test .qt-label {
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: rgba(200, 215, 240, 0.4);
+  flex-shrink: 0;
+}
+.quick-test .qt-input {
+  flex: 1;
+  padding: 7px 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  color: rgba(220, 230, 245, 0.9);
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.quick-test .qt-input:focus {
+  border-color: rgba(150, 180, 255, 0.3);
+}
+.quick-test .qt-status-text {
+  font-size: 11px;
+  color: rgba(200, 215, 240, 0.4);
+}
+
+/* switch-dot for VoiceSettings */
+.form-switch .switch-dot {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  background: rgba(200, 210, 230, 0.6);
+  border-radius: 50%;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.form-switch.on .switch-dot {
+  left: 22px;
+  background: rgba(180, 210, 255, 0.95);
+  box-shadow: 0 0 8px rgba(150, 180, 255, 0.5);
+}
+
+/* slider row */
+.quick-test .slider-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.quick-test .slider-row label {
+  font-size: 12px;
+  color: rgba(200, 215, 240, 0.55);
+  width: 40px;
+  flex-shrink: 0;
+}
+.quick-test .slider-row input[type='range'] {
+  flex: 1;
+}
+.quick-test .slider-row .value {
+  font-size: 12px;
+  color: rgba(200, 215, 240, 0.7);
+  width: 36px;
+  text-align: right;
+}

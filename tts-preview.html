@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>Hermes TTS 设置 · 架构预览</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: "HarmonyOS Sans", "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: linear-gradient(180deg, #1a1b24 0%, #0f1016 100%);
+  color: rgba(220, 230, 245, 0.9);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  padding: 40px 20px 200px;
+}
+
+.container {
+  width: 100%;
+  max-width: 720px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.header-icon {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, rgba(120, 160, 255, 0.3), rgba(180, 140, 255, 0.3));
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.header-icon svg { width: 20px; height: 20px; color: rgba(200, 220, 255, 0.9); }
+
+.header-text h1 { font-size: 18px; font-weight: 500; letter-spacing: 2px; }
+.header-text p { font-size: 12px; color: rgba(200, 215, 240, 0.4); letter-spacing: 1px; margin-top: 4px; }
+
+.section {
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.section-title {
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 3px;
+  color: rgba(200, 215, 240, 0.4);
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.section-title .badge {
+  font-size: 10px;
+  padding: 2px 8px;
+  background: rgba(120, 160, 255, 0.15);
+  border-radius: 4px;
+  color: rgba(150, 180, 255, 0.8);
+  letter-spacing: 1px;
+}
+
+.section-title .badge.warn {
+  background: rgba(245, 158, 11, 0.15);
+  color: rgba(245, 180, 130, 0.8);
+}
+
+.section-title .badge.ok {
+  background: rgba(34, 197, 94, 0.15);
+  color: rgba(130, 220, 150, 0.8);
+}
+
+.providers {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.provider-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.25s;
+  position: relative;
+}
+
+.provider-card:hover {
+  border-color: rgba(150, 180, 255, 0.25);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.provider-card.selected {
+  border-color: rgba(150, 180, 255, 0.5);
+  background: rgba(120, 160, 255, 0.08);
+  box-shadow: 0 0 0 1px rgba(120, 160, 255, 0.15);
+}
+
+.provider-card .status-dot {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.provider-card .status-dot.connected {
+  background: rgba(34, 197, 94, 0.9);
+  box-shadow: 0 0 6px rgba(34, 197, 94, 0.5);
+}
+
+.provider-card .status-dot.pending {
+  background: rgba(245, 158, 11, 0.8);
+  box-shadow: 0 0 6px rgba(245, 158, 11, 0.4);
+}
+
+.provider-card .status-dot.disconnected {
+  background: rgba(156, 163, 175, 0.6);
+}
+
+.provider-logo {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.pl-edge { background: linear-gradient(135deg, #0078d4, #50a7ef); }
+.pl-doubao { background: linear-gradient(135deg, #1f2937, #374151); }
+.pl-aliyun { background: linear-gradient(135deg, #ff6700, #ff9900); }
+.pl-xunfei { background: linear-gradient(135deg, #2962ff, #5c8dff); }
+.pl-volc { background: linear-gradient(135deg, #ff4d2d, #ff6b35); }
+.pl-elevenlabs { background: linear-gradient(135deg, #323232, #4a4a4a); }
+.pl-system { background: linear-gradient(135deg, #4b5563, #6b7280); }
+
+.provider-info { flex: 1; min-width: 0; }
+.provider-name { font-size: 13px; color: rgba(220, 230, 245, 0.9); font-weight: 500; }
+.provider-desc { font-size: 11px; color: rgba(200, 215, 240, 0.4); margin-top: 2px; }
+
+.provider-card .connect-btn {
+  opacity: 0;
+  padding: 4px 10px;
+  font-size: 11px;
+  background: rgba(120, 160, 255, 0.2);
+  border: 1px solid rgba(120, 160, 255, 0.3);
+  border-radius: 4px;
+  color: rgba(180, 210, 255, 0.9);
+  cursor: pointer;
+  transition: all 0.25s;
+  font-family: inherit;
+  white-space: nowrap;
+}
+
+.provider-card:hover .connect-btn { opacity: 1; }
+.provider-card .connect-btn:hover { background: rgba(120, 160, 255, 0.35); }
+.provider-card.connected-card .connect-btn { display: none; }
+
+.provider-note {
+  font-size: 11px;
+  color: rgba(200, 215, 240, 0.35);
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 8px;
+  line-height: 1.6;
+  display: none;
+}
+
+.provider-note.show { display: block; animation: fadeIn 0.3s; }
+.provider-note strong { color: rgba(200, 215, 240, 0.6); }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.form-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.form-row label {
+  font-size: 13px;
+  color: rgba(200, 215, 240, 0.65);
+  font-weight: 300;
+  letter-spacing: 1px;
+}
+
+.form-row .input-wrap { flex: 1; max-width: 280px; }
+
+.form-input,
+.form-select {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  padding: 8px 12px;
+  color: rgba(230, 235, 250, 0.9);
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  transition: all 0.25s;
+}
+
+.form-input:hover,
+.form-select:hover { border-color: rgba(255, 255, 255, 0.15); }
+.form-input:focus,
+.form-select:focus {
+  border-color: rgba(150, 180, 255, 0.35);
+  background: rgba(255, 255, 255, 0.05);
+}
+.form-input::placeholder { color: rgba(200, 215, 240, 0.25); }
+.form-select option { background: #12131a; color: rgba(230, 235, 250, 0.9); }
+
+.form-hint {
+  font-size: 11px;
+  color: rgba(200, 215, 240, 0.35);
+  line-height: 1.6;
+}
+
+.form-switch {
+  position: relative;
+  width: 42px;
+  height: 24px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s;
+  flex-shrink: 0;
+}
+
+.form-switch .dot {
+  position: absolute;
+  top: 2px; left: 2px;
+  width: 18px; height: 18px;
+  background: rgba(200, 210, 230, 0.6);
+  border-radius: 50%;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.form-switch.on {
+  background: rgba(120, 160, 255, 0.3);
+  border-color: rgba(120, 160, 255, 0.4);
+}
+
+.form-switch.on .dot {
+  left: 22px;
+  background: rgba(180, 210, 255, 0.95);
+  box-shadow: 0 0 8px rgba(150, 180, 255, 0.5);
+}
+
+.slider-group { display: flex; flex-direction: column; gap: 14px; }
+
+.slider-row { display: flex; align-items: center; gap: 12px; }
+.slider-row label { font-size: 12px; color: rgba(200, 215, 240, 0.55); width: 50px; flex-shrink: 0; }
+
+.slider-row input[type="range"] {
+  flex: 1; height: 4px; -webkit-appearance: none; appearance: none;
+  background: rgba(255, 255, 255, 0.08); border-radius: 2px; outline: none;
+}
+
+.slider-row input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 14px; height: 14px;
+  background: rgba(180, 210, 255, 0.9); border-radius: 50%; cursor: pointer;
+  box-shadow: 0 0 6px rgba(150, 180, 255, 0.4); transition: transform 0.15s;
+}
+
+.slider-row input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+.slider-row .value { font-size: 12px; color: rgba(200, 215, 240, 0.7); width: 44px; text-align: right; font-variant-numeric: tabular-nums; }
+
+.voice-section { position: relative; }
+
+.voice-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px dashed rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+}
+
+.voice-loading .spinner {
+  width: 28px; height: 28px;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-top-color: rgba(150, 180, 255, 0.6);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.voice-loading .tip { font-size: 12px; color: rgba(200, 215, 240, 0.45); letter-spacing: 1px; }
+
+.voice-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 10px;
+}
+
+.voice-card {
+  display: flex; flex-direction: column; gap: 8px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.25s;
+  position: relative;
+}
+
+.voice-card:hover { border-color: rgba(150, 180, 255, 0.2); background: rgba(255, 255, 255, 0.04); }
+
+.voice-card.selected {
+  border-color: rgba(150, 180, 255, 0.4);
+  background: rgba(120, 160, 255, 0.06);
+}
+
+.voice-card.selected::after {
+  content: ""; position: absolute; top: 10px; right: 10px;
+  width: 8px; height: 8px; border-radius: 50%;
+  background: rgba(150, 200, 255, 0.9); box-shadow: 0 0 8px rgba(150, 200, 255, 0.5);
+}
+
+.voice-top { display: flex; align-items: center; gap: 8px; }
+
+.voice-avatar { width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+.voice-avatar.female { background: linear-gradient(135deg, rgba(255, 150, 180, 0.4), rgba(255, 200, 220, 0.3)); }
+.voice-avatar.male { background: linear-gradient(135deg, rgba(100, 180, 255, 0.4), rgba(150, 200, 255, 0.3)); }
+.voice-avatar.child { background: linear-gradient(135deg, rgba(180, 255, 180, 0.4), rgba(200, 255, 220, 0.3)); }
+
+.voice-name { font-size: 13px; color: rgba(220, 230, 245, 0.9); }
+.voice-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+.voice-tag { font-size: 10px; padding: 2px 6px; background: rgba(255, 255, 255, 0.05); border-radius: 3px; color: rgba(200, 215, 240, 0.5); }
+.voice-tag.lang { background: rgba(120, 160, 255, 0.12); color: rgba(150, 180, 255, 0.7); }
+
+.voice-play {
+  position: absolute; bottom: 10px; right: 10px;
+  width: 24px; height: 24px;
+  background: rgba(150, 180, 255, 0.15);
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: all 0.2s;
+}
+
+.voice-play:hover { background: rgba(150, 180, 255, 0.35); transform: scale(1.1); }
+.voice-play svg { width: 10px; height: 10px; color: rgba(200, 220, 255, 0.9); }
+
+.btn {
+  padding: 7px 16px; border-radius: 6px; font-size: 13px; font-family: inherit;
+  cursor: pointer; border: 1px solid transparent; transition: all 0.25s;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, rgba(120, 160, 255, 0.6), rgba(150, 130, 255, 0.6));
+  color: #fff;
+}
+.btn-primary:hover {
+  background: linear-gradient(135deg, rgba(130, 170, 255, 0.8), rgba(160, 140, 255, 0.8));
+  box-shadow: 0 4px 12px rgba(120, 160, 255, 0.25);
+}
+
+.btn-ghost { background: transparent; color: rgba(200, 220, 255, 0.8); border-color: rgba(255, 255, 255, 0.12); }
+.btn-ghost:hover { border-color: rgba(255, 255, 255, 0.22); background: rgba(255, 255, 255, 0.04); }
+
+.btn-sm { padding: 5px 12px; font-size: 12px; }
+
+.connect-modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.connect-modal-overlay.show { display: flex; }
+
+.connect-modal {
+  width: min(420px, calc(100% - 40px));
+  background: #1a1b24;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  animation: modalIn 0.25s ease-out;
+}
+
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.96) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.connect-modal .modal-header {
+  display: flex; align-items: center; gap: 12px;
+  padding-bottom: 14px; border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.connect-modal .modal-header .logo {
+  width: 36px; height: 36px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 600; color: #fff; font-size: 14px;
+}
+
+.connect-modal .modal-header .info .name { font-size: 15px; color: rgba(220, 230, 245, 0.9); }
+.connect-modal .modal-header .info .desc { font-size: 12px; color: rgba(200, 215, 240, 0.4); margin-top: 2px; }
+
+.connect-modal .modal-body { display: flex; flex-direction: column; gap: 14px; }
+.connect-modal .modal-body .form-row { display: flex; flex-direction: column; align-items: stretch; gap: 6px; }
+.connect-modal .modal-body label { font-size: 12px; color: rgba(200, 215, 240, 0.55); letter-spacing: 1px; }
+.connect-modal .modal-body .form-hint { font-size: 11px; }
+
+.connect-modal .modal-footer {
+  display: flex; justify-content: flex-end; gap: 10px;
+  padding-top: 14px; border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.arch-note {
+  font-size: 11px;
+  color: rgba(200, 215, 240, 0.35);
+  padding: 12px 14px;
+  background: rgba(120, 160, 255, 0.04);
+  border: 1px solid rgba(120, 160, 255, 0.08);
+  border-radius: 8px;
+  line-height: 1.7;
+}
+
+.arch-note code {
+  background: rgba(255, 255, 255, 0.06);
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: 11px;
+  color: rgba(180, 210, 255, 0.8);
+}
+
+.quick-test-bar {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(720px, calc(100% - 40px));
+  background: rgba(18, 20, 28, 0.92);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+  z-index: 50;
+}
+
+.quick-test-bar .qt-label {
+  font-size: 11px;
+  color: rgba(200, 215, 240, 0.4);
+  letter-spacing: 2px;
+  flex-shrink: 0;
+}
+
+.quick-test-bar .qt-input {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  padding: 7px 12px;
+  color: rgba(230, 235, 250, 0.9);
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.25s;
+}
+
+.quick-test-bar .qt-input:focus { border-color: rgba(150, 180, 255, 0.3); }
+.quick-test-bar .qt-input::placeholder { color: rgba(200, 215, 240, 0.25); }
+
+.quick-test-bar .qt-status {
+  font-size: 10px;
+  display: flex; align-items: center; gap: 5px;
+  color: rgba(200, 215, 240, 0.35);
+  flex-shrink: 0;
+}
+
+.quick-test-bar .qt-status .dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: rgba(200, 215, 240, 0.3);
+}
+
+.quick-test-bar .qt-status.speaking .dot {
+  background: rgba(120, 220, 140, 0.9);
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+
+.slider-quick { display: flex; align-items: center; gap: 6px; }
+.slider-quick label { font-size: 10px; color: rgba(200, 215, 240, 0.35); }
+.slider-quick input[type="range"] { width: 50px; height: 3px; -webkit-appearance: none; background: rgba(255,255,255,0.1); border-radius: 2px; outline: none; }
+.slider-quick input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 10px; height: 10px; background: rgba(180,210,255,0.9); border-radius: 50%; cursor: pointer; }
+
+.advanced-toggle {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  font-size: 12px; color: rgba(200, 215, 240, 0.4);
+  cursor: pointer; padding: 8px; transition: color 0.25s; letter-spacing: 1px;
+}
+.advanced-toggle:hover { color: rgba(200, 215, 240, 0.7); }
+.advanced-toggle .arrow { transition: transform 0.3s; }
+.advanced-toggle.open .arrow { transform: rotate(180deg); }
+
+.advanced-panel {
+  display: none; flex-direction: column; gap: 12px;
+  padding-top: 8px; border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+.advanced-panel.show { display: flex; }
+
+.cache-info {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 14px; background: rgba(255, 255, 255, 0.02); border-radius: 8px;
+}
+.cache-info .left { display: flex; flex-direction: column; gap: 3px; }
+.cache-info .size { font-size: 13px; color: rgba(220, 230, 245, 0.8); }
+.cache-info .desc { font-size: 11px; color: rgba(200, 215, 240, 0.4); }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <div class="header">
+    <div class="header-icon">
+      <svg viewBox="0 0 24 24" fill="none">
+        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+        <path d="M19 10v2a7 7 0 0 1-14 0v-2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        <line x1="12" y1="19" x2="12" y2="23" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div class="header-text">
+      <h1>TTS 语音合成</h1>
+      <p>模块化 · 供应商驱动 · 动态音色</p>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">
+      <span>语音引擎</span>
+      <span class="badge" id="engineBadge">未选择引擎</span>
+    </div>
+    <div class="arch-note">
+      <strong style="color:rgba(200,220,255,0.7);">架构说明：</strong>
+      所有供应商以模块化方式接入，音色列表通过 <code>GET /voices</code> 接口从供应商动态获取。供应商更新音色库后，前端自动同步，无需代码变更。未接入的供应商显示「等待接入」状态。
+    </div>
+    <div class="providers" id="providers"></div>
+    <div class="provider-note" id="providerNote"></div>
+  </div>
+
+  <div class="section voice-section" id="voiceSection" style="display:none;">
+    <div class="section-title">
+      <span>语音角色</span>
+      <span class="badge" id="voiceBadge">加载中…</span>
+    </div>
+    <div id="voiceArea"></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title"><span>语音参数</span></div>
+    <div class="slider-group">
+      <div class="slider-row">
+        <label>语速</label>
+        <input type="range" min="0.5" max="2" step="0.1" value="1" id="rate">
+        <span class="value" id="rateVal">1.0x</span>
+      </div>
+      <div class="slider-row">
+        <label>音调</label>
+        <input type="range" min="-10" max="10" step="1" value="0" id="pitch">
+        <span class="value" id="pitchVal">0</span>
+      </div>
+      <div class="slider-row">
+        <label>音量</label>
+        <input type="range" min="0" max="100" step="1" value="100" id="volume">
+        <span class="value" id="volumeVal">100%</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title"><span>朗读行为</span></div>
+    <div class="form-row">
+      <label>自动朗读 AI 回复</label>
+      <div class="form-switch on" data-switch><span class="dot"></span></div>
+    </div>
+    <div class="form-row">
+      <label>朗读触发方式</label>
+      <div class="input-wrap">
+        <select class="form-select">
+          <option>逐条朗读</option>
+          <option>全文朗读</option>
+          <option>手动触发</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <label>朗读范围</label>
+      <div class="input-wrap">
+        <select class="form-select">
+          <option>仅 AI 回复</option>
+          <option>含用户消息</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <label>新消息打断当前朗读</label>
+      <div class="form-switch" data-switch><span class="dot"></span></div>
+    </div>
+    <div class="form-row">
+      <label>提示音</label>
+      <div class="form-switch on" data-switch><span class="dot"></span></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="advanced-toggle" id="advToggle">
+      <span>高级设置</span>
+      <svg class="arrow" width="12" height="12" viewBox="0 0 24 24" fill="none">
+        <polyline points="6,9 12,15 18,9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div class="advanced-panel" id="advPanel">
+      <div class="form-row">
+        <label>情感风格</label>
+        <div class="input-wrap">
+          <select class="form-select">
+            <option>默认</option>
+            <option>温柔</option>
+            <option>活泼</option>
+            <option>严肃</option>
+            <option>新闻播报</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <label>句间停顿</label>
+        <div class="input-wrap"><input type="number" class="form-input" placeholder="毫秒" value="500"/></div>
+      </div>
+      <div class="form-row">
+        <label>隐私模式（不发送文本到云端）</label>
+        <div class="form-switch" data-switch><span class="dot"></span></div>
+      </div>
+      <div class="cache-info">
+        <div class="left">
+          <span class="size">本地缓存：12.4 MB</span>
+          <span class="desc">已下载 6 个语音角色 · 自动清理 7 天未使用的音色</span>
+        </div>
+        <button class="btn btn-ghost btn-sm">清理缓存</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="quick-test-bar">
+  <span class="qt-label">快速试听</span>
+  <input class="qt-input" id="qtInput" placeholder="输入任意文字即时试听…" value="你好，这是一段语音测试文本，当前语速适中，音调正常。"/>
+  <div class="slider-quick">
+    <label>语速</label>
+    <input type="range" min="0.5" max="2" step="0.1" value="1" id="qtRate">
+  </div>
+  <div class="qt-status" id="qtStatus">
+    <span class="dot"></span>
+    <span id="qtStatusText">就绪</span>
+  </div>
+  <button class="btn btn-ghost btn-sm" id="qtStop">停止</button>
+  <button class="btn btn-primary btn-sm" id="qtPlay">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M8 5v14l11-7z" fill="currentColor"/></svg>
+    <span>播放</span>
+  </button>
+</div>
+
+<div class="connect-modal-overlay" id="connectModal">
+  <div class="connect-modal">
+    <div class="modal-header">
+      <div class="modal-logo" id="modalLogo" style="width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:600;color:#fff;font-size:14px;"></div>
+      <div class="info">
+        <div class="name" id="modalName">供应商</div>
+        <div class="desc" id="modalDesc">接入配置</div>
+      </div>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="modalCancel">取消</button>
+      <button class="btn btn-primary" id="modalConnect">连接</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const providers = [
+  {
+    id: "edge", name: "Edge TTS", desc: "免费 · 本地", logo: "E", logoCls: "pl-edge",
+    connected: false,
+    note: "Edge TTS 需安装 edge-tts 依赖包，完全免费本地运行。若不可用请切换其他引擎。",
+    fields: [
+      { key: "pythonPath", label: "Python 路径", placeholder: "默认自动检测", type: "text" },
+      { key: "edgeTtsPath", label: "edge-tts 路径", placeholder: "默认自动检测", type: "text" },
+    ]
+  },
+  {
+    id: "doubao", name: "豆包 TTS", desc: "火山引擎 · 按量计费", logo: "豆", logoCls: "pl-doubao",
+    connected: true,
+    note: "豆包 TTS 由火山引擎提供，按量计费。",
+    fields: [
+      { key: "apiKey", label: "API Key", placeholder: "填入豆包/火山引擎 API Key", type: "password" },
+      { key: "endpoint", label: "Endpoint", placeholder: "https://openspeech.bytedance.com", type: "text" },
+    ]
+  },
+  {
+    id: "aliyun", name: "阿里通义", desc: "阿里云 · 免费额度", logo: "阿", logoCls: "pl-aliyun",
+    connected: false,
+    note: "阿里通义智能语音，需 AccessKey ID / Secret。",
+    fields: [
+      { key: "accessKeyId", label: "AccessKey ID", placeholder: "", type: "text" },
+      { key: "accessKeySecret", label: "AccessKey Secret", placeholder: "", type: "password" },
+      { key: "appKey", label: "App Key", placeholder: "", type: "text" },
+    ]
+  },
+  {
+    id: "xunfei", name: "讯飞 TTS", desc: "科大讯飞 · 企业级", logo: "讯", logoCls: "pl-xunfei",
+    connected: false,
+    note: "讯飞在线语音合成，需 APPID 与 APIKey。",
+    fields: [
+      { key: "appId", label: "APPID", placeholder: "", type: "text" },
+      { key: "apiKey", label: "APIKey", placeholder: "", type: "password" },
+      { key: "apiSecret", label: "APISecret", placeholder: "", type: "password" },
+    ]
+  },
+  {
+    id: "volc", name: "火山引擎", desc: "字节跳动 · 丰富角色", logo: "火", logoCls: "pl-volc",
+    connected: false,
+    note: "火山引擎语音技术，与豆包共享账号体系。",
+    fields: [
+      { key: "appId", label: "App ID", placeholder: "", type: "text" },
+      { key: "accessToken", label: "Access Token", placeholder: "", type: "password" },
+      { key: "cluster", label: "集群", placeholder: "volcano_tts", type: "text" },
+    ]
+  },
+  {
+    id: "elevenlabs", name: "ElevenLabs", desc: "海外 · 高质量", logo: "E", logoCls: "pl-elevenlabs",
+    connected: false,
+    note: "ElevenLabs 支持多语言、声音克隆。需 API Key，有免费额度。云端处理，注意隐私。",
+    fields: [
+      { key: "apiKey", label: "API Key", placeholder: "", type: "password" },
+      { key: "baseUrl", label: "Base URL", placeholder: "https://api.elevenlabs.io", type: "text" },
+    ]
+  },
+  {
+    id: "system", name: "系统原生", desc: "离线 · 零配置", logo: "系", logoCls: "pl-system",
+    connected: true,
+    note: "使用操作系统内置语音合成引擎，完全离线，无需配置。",
+    fields: []
+  },
+];
+
+const voiceCache = {};
+
+const mockVoiceDbs = {
+  edge: [
+    { name: "晓晓", gender: "female", lang: "中文", tags: ["女声", "自然"] },
+    { name: "晓伊", gender: "female", lang: "中文", tags: ["女声", "温柔"] },
+    { name: "云扬", gender: "male", lang: "中文", tags: ["男声", "磁性"] },
+    { name: "云健", gender: "male", lang: "中文", tags: ["男声", "浑厚"] },
+    { name: "Hiujia", gender: "female", lang: "粤语", tags: ["女声"] },
+    { name: "Tingting", gender: "female", lang: "英文", tags: ["女声"] },
+    { name: "Yunxi", gender: "male", lang: "英文", tags: ["男声"] },
+    { name: "Yunjian", gender: "male", lang: "英文", tags: ["男声"] },
+  ],
+  doubao: [
+    { name: "豆包·晓晓", gender: "female", lang: "中文", tags: ["女声", "甜美"] },
+    { name: "豆包·云泽", gender: "male", lang: "中文", tags: ["男声", "磁性"] },
+    { name: "豆包·星辰", gender: "female", lang: "中文", tags: ["女声", "知性"] },
+    { name: "豆包·团团", gender: "child", lang: "中文", tags: ["童声", "可爱"] },
+    { name: "豆包·大壮", gender: "male", lang: "中文", tags: ["男声", "活力"] },
+    { name: "豆包·晓萱", gender: "female", lang: "中文", tags: ["女声", "情感丰富"] },
+    { name: "豆包·小宇", gender: "male", lang: "中文", tags: ["男声", "年轻"] },
+    { name: "豆包·小妍", gender: "female", lang: "中文", tags: ["女声", "情感"] },
+  ],
+  system: [
+    { name: "Microsoft Huihui", gender: "female", lang: "中文", tags: ["系统默认"] },
+    { name: "Microsoft Kangkang", gender: "male", lang: "中文", tags: [] },
+    { name: "Microsoft Yaoyao", gender: "female", lang: "中文", tags: [] },
+    { name: "Samantha", gender: "female", lang: "English", tags: ["macOS"] },
+    { name: "Alex", gender: "male", lang: "English", tags: ["macOS"] },
+  ],
+};
+
+function fetchVoices(providerId) {
+  return new Promise((resolve) => {
+    if (voiceCache[providerId]) {
+      resolve(voiceCache[providerId]);
+      return;
+    }
+    setTimeout(() => {
+      const data = mockVoiceDbs[providerId] || [];
+      voiceCache[providerId] = data;
+      resolve(data);
+    }, 800 + Math.random() * 600);
+  });
+}
+
+const providersEl = document.getElementById("providers");
+const noteEl = document.getElementById("providerNote");
+const engineBadge = document.getElementById("engineBadge");
+const voiceSection = document.getElementById("voiceSection");
+const voiceArea = document.getElementById("voiceArea");
+const voiceBadge = document.getElementById("voiceBadge");
+
+let activeProvider = null;
+let activeVoice = null;
+
+function renderProviders() {
+  providersEl.innerHTML = providers.map(p => {
+    const statusCls = p.connected ? "connected" : "pending";
+    const cardCls = p.connected ? "connected-card" : "";
+    return `
+      <div class="provider-card ${cardCls} ${activeProvider === p.id ? 'selected' : ''}" data-id="${p.id}">
+        <div class="status-dot ${statusCls}" title="${p.connected ? '已连接' : '等待接入'}"></div>
+        <div class="provider-logo ${p.logoCls}">${p.logo}</div>
+        <div class="provider-info">
+          <div class="provider-name">${p.name}</div>
+          <div class="provider-desc">${p.desc}</div>
+        </div>
+        ${p.connected ? '' : '<button class="connect-btn" data-connect="' + p.id + '">接入</button>'}
+      </div>
+    `;
+  }).join("");
+}
+
+function showNote(id) {
+  const p = providers.find(x => x.id === id);
+  if (!p) { noteEl.classList.remove("show"); return; }
+  noteEl.innerHTML = `<strong>${p.name}</strong> · ${p.note}`;
+  noteEl.classList.add("show");
+}
+
+async function selectProvider(id) {
+  activeProvider = id;
+  const p = providers.find(x => x.id === id);
+  if (!p) return;
+
+  document.querySelectorAll(".provider-card").forEach(c => {
+    c.classList.toggle("selected", c.dataset.id === id);
+  });
+
+  showNote(id);
+
+  if (p.connected) {
+    engineBadge.textContent = `当前：${p.name} · 已连接`;
+    engineBadge.className = "badge ok";
+    voiceSection.style.display = "flex";
+    voiceBadge.textContent = `${p.name} · 加载中…`;
+    voiceArea.innerHTML = `
+      <div class="voice-loading">
+        <div class="spinner"></div>
+        <div class="tip">正在从 ${p.name} 获取音色列表…</div>
+      </div>
+    `;
+
+    const voices = await fetchVoices(id);
+    renderVoices(id, voices);
+  } else {
+    engineBadge.textContent = `${p.name} · 等待接入`;
+    engineBadge.className = "badge warn";
+    voiceSection.style.display = "none";
+  }
+}
+
+function renderVoices(providerId, voices) {
+  const p = providers.find(x => x.id === providerId);
+  voiceBadge.textContent = `${p.name} · ${voices.length} 个音色`;
+
+  if (!voices.length) {
+    voiceArea.innerHTML = `
+      <div class="voice-loading">
+        <div class="tip">该供应商暂无可用音色</div>
+      </div>
+    `;
+    return;
+  }
+
+  voiceArea.innerHTML = `
+    <div class="voice-grid">
+      ${voices.map((v, i) => `
+        <div class="voice-card ${i === 0 ? 'selected' : ''}" data-voice="${i}">
+          <div class="voice-top">
+            <div class="voice-avatar ${v.gender}">${v.gender === 'female' ? '♀' : v.gender === 'male' ? '♂' : '♪'}</div>
+            <div>
+              <div class="voice-name">${v.name}</div>
+              <div class="voice-tags">
+                <span class="voice-tag lang">${v.lang}</span>
+                ${v.tags.map(t => `<span class="voice-tag">${t}</span>`).join("")}
+              </div>
+            </div>
+          </div>
+          <div class="voice-play" title="试听 ${v.name}">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M8 5v14l11-7z" fill="currentColor"/></svg>
+          </div>
+        </div>
+      `).join("")}
+    </div>
+  `;
+
+  activeVoice = voices[0];
+  const qtStatusText = document.getElementById("qtStatusText");
+  if (qtStatusText && activeVoice) {
+    qtStatusText.textContent = `就绪 · ${activeVoice.name}`;
+  }
+}
+
+providersEl.addEventListener("click", (e) => {
+  const connectBtn = e.target.closest("[data-connect]");
+  if (connectBtn) {
+    e.stopPropagation();
+    openConnectModal(connectBtn.dataset.connect);
+    return;
+  }
+  const card = e.target.closest(".provider-card");
+  if (!card) return;
+  selectProvider(card.dataset.id);
+});
+
+voiceArea.addEventListener("click", (e) => {
+  const card = e.target.closest(".voice-card");
+  if (!card) return;
+  voiceArea.querySelectorAll(".voice-card").forEach(c => c.classList.remove("selected"));
+  card.classList.add("selected");
+  const idx = parseInt(card.dataset.voice);
+  const p = providers.find(x => x.id === activeProvider);
+  if (p) {
+    fetchVoices(activeProvider).then(voices => {
+      activeVoice = voices[idx];
+      const qtStatusText = document.getElementById("qtStatusText");
+      if (qtStatusText) qtStatusText.textContent = `就绪 · ${activeVoice.name}`;
+    });
+  }
+});
+
+const modal = document.getElementById("connectModal");
+let modalTarget = null;
+
+function openConnectModal(providerId) {
+  modalTarget = providerId;
+  const p = providers.find(x => x.id === providerId);
+  if (!p) return;
+
+  document.getElementById("modalName").textContent = p.name;
+  document.getElementById("modalDesc").textContent = p.desc + " · 接入配置";
+  const logoEl = document.getElementById("modalLogo");
+  logoEl.textContent = p.logo;
+  logoEl.className = "modal-logo " + p.logoCls;
+
+  const body = document.getElementById("modalBody");
+  if (!p.fields.length) {
+    body.innerHTML = `<div class="form-hint">该引擎无需额外配置，点击连接即可使用。</div>`;
+  } else {
+    body.innerHTML = p.fields.map(f => `
+      <div class="form-row" style="display:flex;flex-direction:column;align-items:stretch;gap:6px;">
+        <label>${f.label}</label>
+        <input type="${f.type}" class="form-input" placeholder="${f.placeholder}" data-field="${f.key}"/>
+      </div>
+    `).join("");
+  }
+
+  modal.classList.add("show");
+}
+
+document.getElementById("modalCancel").addEventListener("click", () => modal.classList.remove("show"));
+modal.addEventListener("click", (e) => { if (e.target === modal) modal.classList.remove("show"); });
+
+document.getElementById("modalConnect").addEventListener("click", () => {
+  if (!modalTarget) return;
+  const p = providers.find(x => x.id === modalTarget);
+  if (p) p.connected = true;
+  modal.classList.remove("show");
+  renderProviders();
+  selectProvider(modalTarget);
+});
+
+document.getElementById("advToggle").addEventListener("click", () => {
+  document.getElementById("advPanel").classList.toggle("show");
+  document.getElementById("advToggle").classList.toggle("open");
+});
+
+document.querySelectorAll("[data-switch]").forEach(sw => {
+  sw.addEventListener("click", () => sw.classList.toggle("on"));
+});
+
+document.querySelectorAll('input[type="range"]').forEach(el => {
+  const map = { rate: v => v + "x", pitch: v => v, volume: v => v + "%" };
+  const key = el.id;
+  const valEl = document.getElementById(key + "Val");
+  if (valEl) el.addEventListener("input", () => valEl.textContent = map[key](el.value));
+});
+
+const qtStatus = document.getElementById("qtStatus");
+const qtStatusText = document.getElementById("qtStatusText");
+
+document.getElementById("qtPlay").addEventListener("click", () => {
+  const input = document.getElementById("qtInput");
+  if (!input.value.trim()) return;
+  qtStatus.classList.add("speaking");
+  qtStatusText.textContent = `正在朗读 · ${activeVoice ? activeVoice.name : '未选择'}`;
+  setTimeout(() => {
+    qtStatus.classList.remove("speaking");
+    qtStatusText.textContent = activeVoice ? `就绪 · ${activeVoice.name}` : "就绪";
+  }, 3000);
+});
+
+document.getElementById("qtStop").addEventListener("click", () => {
+  qtStatus.classList.remove("speaking");
+  qtStatusText.textContent = activeVoice ? `就绪 · ${activeVoice.name}` : "就绪";
+});
+
+renderProviders();
+selectProvider("doubao");
+</script>
+
+</body>
+</html>
