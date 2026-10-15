@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "银锁",
+  "productName": "Hermes Desktop",
   "version": "0.1.0",
   "identifier": "com.wwh.hermes-desktop",
   "build": {
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "银锁",
+        "title": "Hermes Desktop",
         "width": 1200,
         "height": 800,
         "minWidth": 600,
